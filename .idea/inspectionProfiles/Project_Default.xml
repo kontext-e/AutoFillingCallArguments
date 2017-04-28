@@ -1,7 +1,6 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
-    <option name="myLocal" value="true" />
     <inspection_tool class="BooleanConstructor" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="CanBeFinal" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="REPORT_CLASSES" value="true" />
@@ -18,6 +17,7 @@
       <option name="m_minLength" value="8" />
       <option name="m_maxLength" value="64" />
     </inspection_tool>
+    <inspection_tool class="ComponentRegistrationProblems" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="ConfusingMainMethod" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ConstantConditions" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="SUGGEST_NULLABLE_ANNOTATIONS" value="false" />
@@ -158,9 +158,7 @@
       <option name="m_minLength" value="5" />
       <option name="m_maxLength" value="32" />
     </inspection_tool>
-    <inspection_tool class="StringConcatenationInLoops" enabled="false" level="WARNING" enabled_by_default="false">
-      <option name="m_ignoreUnlessAssigned" value="false" />
-    </inspection_tool>
+    <inspection_tool class="StringConcatenationInLoops" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="StringConstructor" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreSubstringArguments" value="false" />
     </inspection_tool>

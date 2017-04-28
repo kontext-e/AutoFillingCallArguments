@@ -7,6 +7,7 @@
   <description><![CDATA[
     In source code, create a method or constructor call and place the cursor into the empty braces.
     Open the intentions drop down menu and select the "Auto fill call parameters"
+    LIMITATION: does not work with overloaded methods
     ]]></description>
 
   <change-notes><![CDATA[
