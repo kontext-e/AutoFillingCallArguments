@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>de.kontext_e.idea.plugins.autofill</id>
   <name>Auto filling Java call arguments</name>
-  <version>1.0</version>
+  <version>1.1</version>
   <vendor email="j.nerche@kontext-e.de" url="http://www.kontext-e.de">Kontext E GmbH</vendor>
 
   <description><![CDATA[
@@ -12,6 +12,11 @@
 
   <change-notes><![CDATA[
         First version make from Gist <a href="https://gist.github.com/kontext-e/f68c6a1b90dd862afb5d">ParameterNameGenerator</a>
+        <br/>
+        <h2>Version 1.1</h2>
+        <ul>
+        <li>Bugfix in case of overloaded methods</li>
+        </ul>
         <br/>
     ]]>
   </change-notes>

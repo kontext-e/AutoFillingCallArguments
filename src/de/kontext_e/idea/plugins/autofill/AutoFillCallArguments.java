@@ -22,27 +22,27 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         if(psiElement == null) {
             return;
         }
-        PsiCallExpression call = findParent(PsiCallExpression.class, psiElement);
+        final PsiCallExpression call = findParent(PsiCallExpression.class, psiElement);
         if(call == null) {
             return;
         }
 
-        PsiMethod psiMethod = call.resolveMethod();
+        final PsiMethod psiMethod = call.resolveMethod();
         if(psiMethod == null) {
             return;
         }
-        PsiParameterList parameterList = psiMethod.getParameterList();
+        final PsiParameterList parameterList = psiMethod.getParameterList();
         if(parameterList == null) {
             return;
         }
-        PsiParameter[] params = parameterList.getParameters();
+        final PsiParameter[] params = parameterList.getParameters();
         if(params == null) {
             return;
         }
         String prefix = "";
         int offset = editor.getCaretModel().getOffset();
-        Document doc = editor.getDocument();
-        for(PsiParameter p : params) {
+        final Document doc = editor.getDocument();
+        for(final PsiParameter p : params) {
             doc.insertString(offset, prefix+p.getName());
             offset += p.getName().length() + prefix.length();
             prefix = ", ";
