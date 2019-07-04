@@ -5,7 +5,7 @@ public class ClassA {
   public ClassA(int x, int y) {
   }
 
-//  void callee(int x) {}
+  void callee(int x) {}
 
   void callee(int x, int y) {}
 

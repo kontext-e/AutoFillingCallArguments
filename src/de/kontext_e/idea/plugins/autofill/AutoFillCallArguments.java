@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,6 +23,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -89,13 +91,14 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
 
     private <T> T findParent(final Class<T> aClass, final PsiElement element) {
         if (element == null) return null;
-//        else if (PsiClass.class.isAssignableFrom(element.getClass())) return null;
+        else if (PsiClass.class.isAssignableFrom(element.getClass())) return null;
         else if (aClass.isAssignableFrom(element.getClass())) return aClass.cast(element);
         else return findParent(aClass, element.getParent());
     }
 
     private PsiMethod resolveMethodFromCandidates(@NotNull final Project project, final Editor editor, @NotNull final PsiElement psiElement) {
-        final PsiFile file = findParent(PsiFile.class, psiElement);
+        final PsiFile file = project == null ? null : PsiUtilBase.getPsiFileInEditor(editor, project);
+
         final int offset = editor.getCaretModel().getOffset();
         final int fileLength = file.getTextLength();
 
@@ -116,6 +119,7 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         if (handlers == null) handlers = new ParameterInfoHandler[0];
 
         PsiMethod psiMethod = null;
+        int mostNumberOfParameters = 0;
         DumbService.getInstance(project).setAlternativeResolveEnabled(true);
         try {
             for (final ParameterInfoHandler handler : handlers) {
@@ -127,7 +131,17 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
                             final CandidateInfo candidate = (CandidateInfo)item;
                             final PsiElement candidateElement = candidate.getElement();
                             if(candidateElement instanceof PsiMethod) {
-                                psiMethod = (PsiMethod)candidateElement;
+                                final PsiMethod candidatePsiMethod = (PsiMethod)candidateElement;
+                                final PsiParameterList parameterList = candidatePsiMethod.getParameterList();
+                                if(parameterList != null) {
+                                    final PsiParameter[] params = parameterList.getParameters();
+                                    if (params != null) {
+                                        if(params.length > mostNumberOfParameters) {
+                                            mostNumberOfParameters = params.length;
+                                            psiMethod = candidatePsiMethod;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
