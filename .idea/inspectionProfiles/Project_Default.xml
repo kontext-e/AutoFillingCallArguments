@@ -41,6 +41,9 @@
     </inspection_tool>
     <inspection_tool class="FinalPrivateMethod" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="FinalStaticMethod" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="GrUnnecessaryPublicModifier" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="GrUnnecessarySemicolon" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="GroovyAssignabilityCheck" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InnerClassVariableHidesOuterClassVariable" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="m_ignoreInvisibleFields" value="true" />
     </inspection_tool>
@@ -162,6 +165,7 @@
     <inspection_tool class="StringConstructor" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreSubstringArguments" value="false" />
     </inspection_tool>
+    <inspection_tool class="StringOperationCanBeSimplifiedMerged" />
     <inspection_tool class="SynchronizeOnNonFinalField" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SystemOutErr" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ThrowFromFinallyBlock" enabled="false" level="WARNING" enabled_by_default="false" />

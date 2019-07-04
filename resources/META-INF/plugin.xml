@@ -1,18 +1,21 @@
-<idea-plugin version="2">
+<idea-plugin>
   <id>de.kontext_e.idea.plugins.autofill</id>
   <name>Auto filling Java call arguments</name>
-  <version>1.1</version>
+  <version>1.2</version>
   <vendor email="j.nerche@kontext-e.de" url="http://www.kontext-e.de">Kontext E GmbH</vendor>
 
   <description><![CDATA[
     In source code, create a method or constructor call and place the cursor into the empty braces.
     Open the intentions drop down menu and select the "Auto fill call parameters"
-    LIMITATION: does not work with overloaded methods
     ]]></description>
 
   <change-notes><![CDATA[
         First version make from Gist <a href="https://gist.github.com/kontext-e/f68c6a1b90dd862afb5d">ParameterNameGenerator</a>
         <br/>
+        <h2>Version 1.2</h2>
+        <ul>
+        <li>Takes one of the overloaded methods</li>
+        </ul>
         <h2>Version 1.1</h2>
         <ul>
         <li>Bugfix in case of overloaded methods</li>
@@ -36,7 +39,6 @@
       <className>de.kontext_e.idea.plugins.autofill.AutoFillCallArguments</className>
       <category>Other</category>
       <descriptionDirectoryName>AutoFillCallArguments</descriptionDirectoryName>
-
     </intentionAction>
   </extensions>
 

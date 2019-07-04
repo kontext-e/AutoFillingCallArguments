@@ -7,7 +7,7 @@ This is an IntelliJ IDEA plugin. It guesses the call parameters by the callee pa
 
 Known limitations
 -----------------
-* does not work with overloaded methods
+* takes one of the overloaded methods without asking which one
 
 Licence
 -------

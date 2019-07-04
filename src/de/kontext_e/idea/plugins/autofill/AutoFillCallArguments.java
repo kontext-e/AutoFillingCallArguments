@@ -1,24 +1,39 @@
 package de.kontext_e.idea.plugins.autofill;
 
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
+import com.intellij.codeInsight.hint.ShowParameterInfoContext;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.lang.Language;
+import com.intellij.lang.parameterInfo.LanguageParameterInfo;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCallExpression;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AutoFillCallArguments extends PsiElementBaseIntentionAction implements IntentionAction {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement psiElement) throws IncorrectOperationException {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+
         if(psiElement == null) {
             return;
         }
@@ -27,9 +42,12 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
             return;
         }
 
-        final PsiMethod psiMethod = call.resolveMethod();
+        PsiMethod psiMethod = call.resolveMethod();
         if(psiMethod == null) {
-            return;
+            psiMethod = resolveMethodFromCandidates(project, editor, psiElement);
+            if(psiMethod == null) {
+                return;
+            }
         }
         final PsiParameterList parameterList = psiMethod.getParameterList();
         if(parameterList == null) {
@@ -52,8 +70,8 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
 
     @Override
     public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement psiElement) {
-        PsiCallExpression psiCallExpression = findParent(PsiCallExpression.class, psiElement);
-        return psiCallExpression != null && psiCallExpression.resolveMethod() != null;
+        final PsiCallExpression psiCallExpression = findParent(PsiCallExpression.class, psiElement);
+        return psiCallExpression != null;
     }
 
     @Nls
@@ -69,10 +87,69 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         return "Auto fill call parameters";
     }
 
-    private <T> T findParent(Class<T> aClass, PsiElement element) {
+    private <T> T findParent(final Class<T> aClass, final PsiElement element) {
         if (element == null) return null;
-        else if (PsiClass.class.isAssignableFrom(element.getClass())) return null;
+//        else if (PsiClass.class.isAssignableFrom(element.getClass())) return null;
         else if (aClass.isAssignableFrom(element.getClass())) return aClass.cast(element);
         else return findParent(aClass, element.getParent());
     }
+
+    private PsiMethod resolveMethodFromCandidates(@NotNull final Project project, final Editor editor, @NotNull final PsiElement psiElement) {
+        final PsiFile file = findParent(PsiFile.class, psiElement);
+        final int offset = editor.getCaretModel().getOffset();
+        final int fileLength = file.getTextLength();
+
+        final ShowParameterInfoContext context = new ShowParameterInfoContext(
+            editor,
+            project,
+            file,
+            offset,
+            -1,
+            false,
+            false
+        );
+
+        final int offsetForLangDetection = offset > 0 && offset == fileLength ? offset - 1 : offset;
+        final Language language = PsiUtilCore.getLanguageAtOffset(file, offsetForLangDetection);
+        ParameterInfoHandler[] handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
+
+        if (handlers == null) handlers = new ParameterInfoHandler[0];
+
+        PsiMethod psiMethod = null;
+        DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+        try {
+            for (final ParameterInfoHandler handler : handlers) {
+                final Object element = handler.findElementForParameterInfo(context);
+                if (element != null) {
+                    final Object[] itemsToShow = context.getItemsToShow();
+                    for(final Object item : itemsToShow) {
+                        if(item instanceof CandidateInfo) {
+                            final CandidateInfo candidate = (CandidateInfo)item;
+                            final PsiElement candidateElement = candidate.getElement();
+                            if(candidateElement instanceof PsiMethod) {
+                                psiMethod = (PsiMethod)candidateElement;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return psiMethod;
+        }
+        finally {
+            DumbService.getInstance(project).setAlternativeResolveEnabled(false);
+        }
+    }
+
+    @Nullable
+    public static ParameterInfoHandler[] getHandlers(final Project project, final Language... languages) {
+        final Set<ParameterInfoHandler> handlers = new LinkedHashSet<>();
+        final DumbService dumbService = DumbService.getInstance(project);
+        for (final Language language : languages) {
+            handlers.addAll(dumbService.filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
+        }
+        if (handlers.isEmpty()) return null;
+        return handlers.toArray(new ParameterInfoHandler[0]);
+    }
+
 }
