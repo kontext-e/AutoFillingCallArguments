@@ -1,0 +1,10 @@
+public class X {
+  void callee(int x, int y) {}
+
+  void caller() {
+    int x = 0;
+    int y = 0;
+    // place the cursor in the parentheses
+    callee();
+  }
+}
