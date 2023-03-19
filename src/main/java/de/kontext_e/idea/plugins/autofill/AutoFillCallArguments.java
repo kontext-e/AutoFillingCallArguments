@@ -1,9 +1,5 @@
 package de.kontext_e.idea.plugins.autofill;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.intellij.codeInsight.hint.ShowParameterInfoContext;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -16,14 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.psi.PsiCallExpression;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
@@ -34,6 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class AutoFillCallArguments extends PsiElementBaseIntentionAction implements IntentionAction {
     @Override
@@ -43,12 +35,12 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
 
         // Create a popup dialog that displays the list of options
 
-        DefaultListModel<String> model = new DefaultListModel<>();
-        JList<String> list = new JBList<>( model );
-        List.of("A","B","C").forEach(e->  model.addElement( e ));
+        final var model = new DefaultListModel<String>();
+        final var list = new JBList<>(model);
+        List.of("A", "B", "C").forEach(model::addElement);
 
 
-        PopupChooserBuilder<String> builder = new PopupChooserBuilder<>(list);
+        final var builder = new PopupChooserBuilder<>(list);
         builder.setTitle("Choose an option");
         builder.setItemChosenCallback((selectedOption) -> {
             // Handle the selected option here
@@ -56,35 +48,26 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         });
         builder.createPopup().showInBestPositionFor(editor);
 
-
-        if(psiElement == null) {
-            return;
-        }
         final PsiCallExpression call = findParent(PsiCallExpression.class, psiElement);
-        if(call == null) {
+        if (call == null) {
             return;
         }
 
         PsiMethod psiMethod = call.resolveMethod();
-        if(psiMethod == null) {
+        if (psiMethod == null) {
             psiMethod = resolveMethodFromCandidates(project, editor, psiElement);
-            if(psiMethod == null) {
+            if (psiMethod == null) {
                 return;
             }
         }
         final PsiParameterList parameterList = psiMethod.getParameterList();
-        if(parameterList == null) {
-            return;
-        }
         final PsiParameter[] params = parameterList.getParameters();
-        if(params == null) {
-            return;
-        }
+
         String prefix = "";
         int offset = editor.getCaretModel().getOffset();
         final Document doc = editor.getDocument();
-        for(final PsiParameter p : params) {
-            doc.insertString(offset, prefix+p.getName());
+        for (final PsiParameter p : params) {
+            doc.insertString(offset, prefix + p.getName());
             offset += p.getName().length() + prefix.length();
             prefix = ", ";
         }
@@ -111,10 +94,15 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
     }
 
     private <T> T findParent(final Class<T> aClass, final PsiElement element) {
-        if (element == null) return null;
-        else if (PsiClass.class.isAssignableFrom(element.getClass())) return null;
-        else if (aClass.isAssignableFrom(element.getClass())) return aClass.cast(element);
-        else return findParent(aClass, element.getParent());
+        if (element == null) {
+            return null;
+        } else if (PsiClass.class.isAssignableFrom(element.getClass())) {
+            return null;
+        } else if (aClass.isAssignableFrom(element.getClass())) {
+            return aClass.cast(element);
+        } else {
+            return findParent(aClass, element.getParent());
+        }
     }
 
     private PsiMethod resolveMethodFromCandidates(@NotNull final Project project, final Editor editor, @NotNull final PsiElement psiElement) {
@@ -124,20 +112,22 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         final int fileLength = file.getTextLength();
 
         final ShowParameterInfoContext context = new ShowParameterInfoContext(
-            editor,
-            project,
-            file,
-            offset,
-            -1,
-            false,
-            false
+                editor,
+                project,
+                file,
+                offset,
+                -1,
+                false,
+                false
         );
 
         final int offsetForLangDetection = offset > 0 && offset == fileLength ? offset - 1 : offset;
         final Language language = PsiUtilCore.getLanguageAtOffset(file, offsetForLangDetection);
         ParameterInfoHandler[] handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
 
-        if (handlers == null) handlers = new ParameterInfoHandler[0];
+        if (handlers == null) {
+            handlers = new ParameterInfoHandler[0];
+        }
 
         PsiMethod psiMethod = null;
         int mostNumberOfParameters = 0;
@@ -147,17 +137,17 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
                 final Object element = handler.findElementForParameterInfo(context);
                 if (element != null) {
                     final Object[] itemsToShow = context.getItemsToShow();
-                    for(final Object item : itemsToShow) {
-                        if(item instanceof CandidateInfo) {
-                            final CandidateInfo candidate = (CandidateInfo)item;
+                    for (final Object item : itemsToShow) {
+                        if (item instanceof CandidateInfo) {
+                            final CandidateInfo candidate = (CandidateInfo) item;
                             final PsiElement candidateElement = candidate.getElement();
-                            if(candidateElement instanceof PsiMethod) {
-                                final PsiMethod candidatePsiMethod = (PsiMethod)candidateElement;
+                            if (candidateElement instanceof PsiMethod) {
+                                final PsiMethod candidatePsiMethod = (PsiMethod) candidateElement;
                                 final PsiParameterList parameterList = candidatePsiMethod.getParameterList();
-                                if(parameterList != null) {
+                                if (parameterList != null) {
                                     final PsiParameter[] params = parameterList.getParameters();
                                     if (params != null) {
-                                        if(params.length > mostNumberOfParameters) {
+                                        if (params.length > mostNumberOfParameters) {
                                             mostNumberOfParameters = params.length;
                                             psiMethod = candidatePsiMethod;
                                         }
@@ -170,8 +160,7 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
             }
 
             return psiMethod;
-        }
-        finally {
+        } finally {
             DumbService.getInstance(project).setAlternativeResolveEnabled(false);
         }
     }
@@ -183,7 +172,9 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         for (final Language language : languages) {
             handlers.addAll(dumbService.filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
         }
-        if (handlers.isEmpty()) return null;
+        if (handlers.isEmpty()) {
+            return null;
+        }
         return handlers.toArray(new ParameterInfoHandler[0]);
     }
 
