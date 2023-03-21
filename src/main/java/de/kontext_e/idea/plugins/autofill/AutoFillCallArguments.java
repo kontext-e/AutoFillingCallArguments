@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.parameterInfo.LanguageParameterInfo;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -23,43 +24,74 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.intellij.openapi.command.UndoConfirmationPolicy.DEFAULT;
 
 public class AutoFillCallArguments extends PsiElementBaseIntentionAction implements IntentionAction {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement psiElement) throws IncorrectOperationException {
+        if (editor == null) {
+            return;
+        }
         ApplicationManager.getApplication().assertIsDispatchThread();
         PsiDocumentManager.getInstance(project).commitAllDocuments();
+        
+        final var psiMethods = resolveMethodFromCandidates(project, editor, psiElement);
+        if (psiMethods.isEmpty()) {
+            return;
+        }
+        if (psiMethods.size() == 1) {
+            insertParameters(editor, psiMethods.iterator().next());
+        } else {
+            insertParameters(project, editor, psiMethods);
+        }
 
+
+    }
+
+    private void insertParameters(final Project project, final Editor editor, final Collection<PsiMethod> psiMethods) {
         // Create a popup dialog that displays the list of options
+        final var methodsWrapped = psiMethods.stream()
+                .map(PsiMethodWrapper::new)
+                .collect(Collectors.toList());
 
-        final var model = new DefaultListModel<String>();
+
+        final var model = new DefaultListModel<PsiMethodWrapper>();
         final var list = new JBList<>(model);
-        List.of("A", "B", "C").forEach(model::addElement);
+        methodsWrapped.forEach(model::addElement);
 
 
         final var builder = new PopupChooserBuilder<>(list);
-        builder.setTitle("Choose an option");
-        builder.setItemChosenCallback((selectedOption) -> {
-            // Handle the selected option here
-            System.out.println("Selected option: " + selectedOption);
+        // builder.setTitle("Choose an option");
+
+        builder.setItemChosenCallback(selectedOption -> {
+            ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
+                ApplicationManager.getApplication().runWriteAction(() -> {
+                    final PsiParameterList parameterList = selectedOption.method.getParameterList();
+                    final PsiParameter[] params = parameterList.getParameters();
+
+                    final int offset = editor.getCaretModel().getOffset();
+                    final Document doc = editor.getDocument();
+                    final String insertString = Arrays.stream(params).map(p -> p.getName()).collect(Collectors.joining(", "));
+
+                    CommandProcessor.getInstance().executeCommand(project, () -> {
+                        doc.insertString(offset, insertString);
+                        editor.getCaretModel().moveToOffset(offset + insertString.length() + 1);
+                    }, "Add auto parameters", null, DEFAULT, doc);
+
+
+                });
+            });
         });
+
         builder.createPopup().showInBestPositionFor(editor);
 
-        final PsiCallExpression call = findParent(PsiCallExpression.class, psiElement);
-        if (call == null) {
-            return;
-        }
 
-        PsiMethod psiMethod = call.resolveMethod();
-        if (psiMethod == null) {
-            psiMethod = resolveMethodFromCandidates(project, editor, psiElement);
-            if (psiMethod == null) {
-                return;
-            }
-        }
+    }
+
+    private static void insertParameters(final Editor editor, final PsiMethod psiMethod) {
         final PsiParameterList parameterList = psiMethod.getParameterList();
         final PsiParameter[] params = parameterList.getParameters();
 
@@ -93,8 +125,9 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         return "Auto fill call parameters";
     }
 
+    @Nullable
     private <T> T findParent(final Class<T> aClass, final PsiElement element) {
-        if (element == null) {
+        if (element == null || aClass == null) {
             return null;
         } else if (PsiClass.class.isAssignableFrom(element.getClass())) {
             return null;
@@ -105,77 +138,57 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         }
     }
 
-    private PsiMethod resolveMethodFromCandidates(@NotNull final Project project, final Editor editor, @NotNull final PsiElement psiElement) {
-        final PsiFile file = project == null ? null : PsiUtilBase.getPsiFileInEditor(editor, project);
+    private Collection<PsiMethod> resolveMethodFromCandidates(@NotNull final Project project, final Editor editor, @NotNull final PsiElement psiElement) {
+        final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
 
         final int offset = editor.getCaretModel().getOffset();
         final int fileLength = file.getTextLength();
 
-        final ShowParameterInfoContext context = new ShowParameterInfoContext(
-                editor,
-                project,
-                file,
-                offset,
-                -1,
-                false,
-                false
-        );
+        final ShowParameterInfoContext context = new ShowParameterInfoContext(editor, project, file, offset, -1, false, false);
 
         final int offsetForLangDetection = offset > 0 && offset == fileLength ? offset - 1 : offset;
         final Language language = PsiUtilCore.getLanguageAtOffset(file, offsetForLangDetection);
-        ParameterInfoHandler[] handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
 
-        if (handlers == null) {
-            handlers = new ParameterInfoHandler[0];
-        }
-
-        PsiMethod psiMethod = null;
-        int mostNumberOfParameters = 0;
         DumbService.getInstance(project).setAlternativeResolveEnabled(true);
         try {
-            for (final ParameterInfoHandler handler : handlers) {
-                final Object element = handler.findElementForParameterInfo(context);
-                if (element != null) {
-                    final Object[] itemsToShow = context.getItemsToShow();
-                    for (final Object item : itemsToShow) {
-                        if (item instanceof CandidateInfo) {
-                            final CandidateInfo candidate = (CandidateInfo) item;
-                            final PsiElement candidateElement = candidate.getElement();
-                            if (candidateElement instanceof PsiMethod) {
-                                final PsiMethod candidatePsiMethod = (PsiMethod) candidateElement;
-                                final PsiParameterList parameterList = candidatePsiMethod.getParameterList();
-                                if (parameterList != null) {
-                                    final PsiParameter[] params = parameterList.getParameters();
-                                    if (params != null) {
-                                        if (params.length > mostNumberOfParameters) {
-                                            mostNumberOfParameters = params.length;
-                                            psiMethod = candidatePsiMethod;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return psiMethod;
+            return getParameterInfoHandlers(project, file, language).stream()
+                    .map(handler -> handler.findElementForParameterInfo(context))
+                    .filter(Objects::nonNull)
+                    .flatMap(element -> Arrays.stream(context.getItemsToShow()))
+                    .filter(CandidateInfo.class::isInstance)
+                    .map(CandidateInfo.class::cast)
+                    .map(CandidateInfo::getElement)
+                    .filter(PsiMethod.class::isInstance)
+                    .map(PsiMethod.class::cast)
+                    .filter(PsiMethod::hasParameters)
+                    .collect(Collectors.toList());
         } finally {
             DumbService.getInstance(project).setAlternativeResolveEnabled(false);
         }
     }
 
-    @Nullable
-    public static ParameterInfoHandler[] getHandlers(final Project project, final Language... languages) {
-        final Set<ParameterInfoHandler> handlers = new LinkedHashSet<>();
-        final DumbService dumbService = DumbService.getInstance(project);
-        for (final Language language : languages) {
-            handlers.addAll(dumbService.filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
+    @NotNull
+    private static Collection<ParameterInfoHandler> getParameterInfoHandlers(@NotNull final Project project, @NotNull final PsiFile file, @NotNull final Language language) {
+        final var handlers = new HashSet<ParameterInfoHandler>();
+        final var dumbService = DumbService.getInstance(project);
+        for (final var currentLanguage : List.of(language, file.getViewProvider().getBaseLanguage())) {
+            handlers.addAll(dumbService.filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(currentLanguage)));
         }
-        if (handlers.isEmpty()) {
-            return null;
-        }
-        return handlers.toArray(new ParameterInfoHandler[0]);
+        return handlers;
     }
 
+    private static class PsiMethodWrapper {
+        private final PsiMethod method;
+
+        public PsiMethodWrapper(final PsiMethod method) {
+            this.method = method;
+        }
+
+        @Override
+        public String toString() {
+            return Arrays.stream(method.getParameterList().getParameters())
+                    .map(p -> p.getType().getCanonicalText() + "  " + p.getName())
+                    .collect(Collectors.joining(", "));
+        }
+    }
 }
