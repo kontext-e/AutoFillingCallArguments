@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtilBase;
@@ -34,6 +35,7 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         if (editor == null) {
             return;
         }
+
         ApplicationManager.getApplication().assertIsDispatchThread();
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -61,7 +63,7 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         final var builder = new PopupChooserBuilder<>(list);
 
         builder.setItemChosenCallback(selectedOption ->
-                ApplicationManager.getApplication().invokeLaterOnWriteThread(() ->
+                ApplicationManager.getApplication().invokeLater(() ->
                         ApplicationManager.getApplication().runWriteAction(() -> {
                             final var doc = editor.getDocument();
                             CommandProcessor.getInstance().executeCommand(
@@ -80,7 +82,13 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         final PsiParameterList parameterList = psiMethod.getParameterList();
         final PsiParameter[] params = parameterList.getParameters();
         final var doc = editor.getDocument();
-        final int offset = editor.getCaretModel().getOffset();
+        int offset = editor.getCaretModel().getOffset();
+        final var textUnderCaret = doc.getText(new TextRange(offset, offset + 1));
+        if (textUnderCaret.startsWith("(")) {
+            offset++;
+        } else if (!textUnderCaret.startsWith(")")) {
+            offset--;
+        }
         final var insertString = Arrays.stream(params)
                 .map(PsiParameter::getName)
                 .collect(Collectors.joining(", "));

@@ -3,8 +3,8 @@ plugins {
     id("org.jetbrains.intellij") version "1.13.2"
 }
 
-group = "net.npg"
-version = "1.0-SNAPSHOT"
+group = "de.kontext_e.idea.plugins.autofill"
+version = "1.2"
 
 repositories {
     mavenCentral()
