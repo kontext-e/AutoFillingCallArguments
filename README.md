@@ -5,9 +5,9 @@ This is an IntelliJ IDEA plugin. It guesses the call parameters by the callee pa
 
 <img src="demo.gif" alt="demo" title="demo" align="center"/>
 
-Known limitations
+Special Thanks
 -----------------
-* takes one of the overloaded methods without asking which one
+* The code to choose one of the overloaded methods was created by Roland Spatzenegger https://github.com/CymricNPG
 
 Licence
 -------
