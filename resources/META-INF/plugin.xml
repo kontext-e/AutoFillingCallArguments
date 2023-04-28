@@ -31,7 +31,8 @@
   </change-notes>
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-  <idea-version since-build="173.2099.1"/>
+  <!-- 193.7288.26 is 2019.3.5 -->
+  <idea-version since-build="193.7288.26"/>
 
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.modules.java</depends>
