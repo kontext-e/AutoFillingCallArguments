@@ -159,16 +159,13 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
 
         return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
             () -> getParameterInfoHandlers(project, file, language).stream()
-                                                                   .map(handler -> handler.findElementForParameterInfo(context))
-                                                                   .filter(Objects::nonNull)
-                                                                   .flatMap(element -> Arrays.stream(context.getItemsToShow()))
-                                                                   .filter(CandidateInfo.class::isInstance)
-                                                                   .map(CandidateInfo.class::cast)
-                                                                   .map(CandidateInfo::getElement)
-                                                                   .filter(PsiMethod.class::isInstance)
-                                                                   .map(PsiMethod.class::cast)
-                                                                   .filter(PsiMethod::hasParameters)
-                                                                   .collect(Collectors.toList()));
+                                                                    .map(handler -> handler.findElementForParameterInfo(context))
+                                                                    .filter(Objects::nonNull)
+                                                                    .flatMap(element -> Arrays.stream(context.getItemsToShow()))
+                                                                    .map(MethodParameterInfoHandler::tryGetMethodFromCandidate)
+                                                                    .filter(Objects::nonNull)
+                                                                    .filter(PsiMethod::hasParameters)
+                                                                    .collect(Collectors.toList()));
     }
 
     @NotNull
