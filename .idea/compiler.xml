@@ -15,5 +15,6 @@
       <entry name="!*.mpsr" />
       <entry name="!*.model" />
     </wildcardResourcePatterns>
+    <bytecodeTargetLevel target="17" />
   </component>
 </project>

@@ -178,37 +178,12 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         return handlers;
     }
 
-    private class PsiMethodWrapper {
-        private final PsiMethod method;
-
-        public PsiMethodWrapper(final PsiMethod method) {
-            this.method = method;
-        }
-
-        public PsiMethod getMethod() {
-            return method;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
-            final PsiMethodWrapper that = (PsiMethodWrapper) o;
-            return Objects.equals(method, that.method);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(method);
-        }
-
+    private record PsiMethodWrapper(PsiMethod method) {
         @Override
         public String toString() {
             return Arrays.stream(method.getParameterList().getParameters())
-                         .map(p -> p.getType().getCanonicalText() + "  " + p.getName())
-                         .collect(Collectors.joining(", "));
+                    .map(p -> p.getType().getCanonicalText() + "  " + p.getName())
+                    .collect(Collectors.joining(", "));
         }
     }
 }

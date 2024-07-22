@@ -14,6 +14,6 @@ public class ClassA {
   void caller() {
     int x = 0;
     int y = 0;
-    callee(x, y);
+    new ClassA()
   }
 }
