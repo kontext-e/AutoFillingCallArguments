@@ -45,12 +45,6 @@
     </intentionAction>
   </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>de.kontext_e.idea.plugins.autofill.AutoFillCallArguments</implementation-class>
-    </component>
-  </project-components>
-
   <actions>
     <!-- Add your actions here -->
   </actions>

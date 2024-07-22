@@ -9,12 +9,20 @@ import com.intellij.lang.parameterInfo.LanguageParameterInfo;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.components.JBList;
@@ -23,13 +31,19 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.DefaultListModel;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.command.UndoConfirmationPolicy.DEFAULT;
 
-public class AutoFillCallArguments extends PsiElementBaseIntentionAction implements IntentionAction {
+@Service(Service.Level.PROJECT)
+public final class AutoFillCallArguments extends PsiElementBaseIntentionAction implements IntentionAction {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement psiElement) throws IncorrectOperationException {
         if (editor == null) {
@@ -41,7 +55,7 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         }
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-        final var psiMethods = resolveMethodFromCandidates(project, editor, psiElement);
+        final var psiMethods = resolveMethodFromCandidates(project, editor);
         if (psiMethods.isEmpty()) {
             return;
         }
@@ -87,6 +101,7 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         } else if (!textUnderCaret.startsWith(")")) {
             offset--;
         }
+
         final var insertString = Arrays.stream(params)
                 .map(PsiParameter::getName)
                 .collect(Collectors.joining(", "));
@@ -126,7 +141,7 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         }
     }
 
-    private Collection<PsiMethod> resolveMethodFromCandidates(@NotNull final Project project, final Editor editor, @NotNull final PsiElement psiElement) {
+    private Collection<PsiMethod> resolveMethodFromCandidates(@NotNull final Project project, final Editor editor) {
         final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
 
         final int offset = editor.getCaretModel().getOffset();
@@ -138,14 +153,15 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
         final Language language = PsiUtilCore.getLanguageAtOffset(file, offsetForLangDetection);
 
         return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
-            () -> getParameterInfoHandlers(project, file, language).stream()
-                    .map(handler -> handler.findElementForParameterInfo(context))
-                    .filter(Objects::nonNull)
-                    .flatMap(element -> Arrays.stream(context.getItemsToShow()))
-                    .map(MethodParameterInfoHandler::tryGetMethodFromCandidate)
-                    .filter(Objects::nonNull)
-                    .filter(PsiMethod::hasParameters)
-                    .collect(Collectors.toList()));
+                () -> getParameterInfoHandlers(project, file, language)
+                        .stream()
+                        .map(handler -> handler.findElementForParameterInfo(context))
+                        .filter(Objects::nonNull)
+                        .flatMap(element -> Arrays.stream(context.getItemsToShow()))
+                        .map(MethodParameterInfoHandler::tryGetMethodFromCandidate)
+                        .filter(Objects::nonNull)
+                        .filter(PsiMethod::hasParameters)
+                        .toList());
     }
 
     @NotNull
