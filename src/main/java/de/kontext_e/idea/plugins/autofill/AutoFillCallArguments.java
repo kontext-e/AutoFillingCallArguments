@@ -161,9 +161,15 @@ public class AutoFillCallArguments extends PsiElementBaseIntentionAction impleme
     private record PsiMethodWrapper(PsiMethod method) {
         @Override
         public String toString() {
-            return Arrays.stream(method.getParameterList().getParameters())
-                    .map(p -> p.getType().getCanonicalText() + "  " + p.getName())
-                    .collect(Collectors.joining(", "));
+            final StringJoiner parametersInfo = new StringJoiner(", ");
+
+            ApplicationManager.getApplication().runReadAction(() -> {
+                for (final PsiParameter parameter : method.getParameterList().getParameters()) {
+                    parametersInfo.add(parameter.getType().getCanonicalText() + " " + parameter.getName());
+                }
+            });
+
+            return parametersInfo.toString();
         }
     }
 }
