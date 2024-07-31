@@ -46,9 +46,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <intentionAction>
+      <language>JAVA</language>
       <className>de.kontext_e.idea.plugins.autofill.AutoFillCallArguments</className>
       <category>Other</category>
-      <descriptionDirectoryName>AutoFillCallArguments/src/main/resources/intentionDescriptions/AutoFillCallArguments</descriptionDirectoryName>
     </intentionAction>
   </extensions>
 
