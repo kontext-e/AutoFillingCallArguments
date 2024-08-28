@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "de.kontext-e.jqassistant.plugin"
-version = "1.3.1"
+version = "1.3.2"
 
 repositories {
     mavenCentral()
@@ -27,7 +27,6 @@ java {
 tasks {
     patchPluginXml {
         sinceBuild.set("233")
-        untilBuild.set("241.*")
     }
 
     signPlugin {
