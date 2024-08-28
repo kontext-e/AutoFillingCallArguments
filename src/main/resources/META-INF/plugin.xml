@@ -10,30 +10,42 @@
     ]]></description>
 
   <change-notes><![CDATA[
-    <h2>Version 1.3</h2>
+   <h2>Version 1.3.2</h2>
       <ul>
         <li>
-          Fixed plugin for IntelliJ 2023.3+
-          IDE no longer needs restart after installation
-        <\li>
-      <\ul>
-    <h2>Version 1.2</h2>
-      <ul>
-        <li>
-          When methods are overloaded, display a popup with the available options.
-          This change is made by Roland Spatzenegger https://github.com/CymricNPG
+          Removed upper limit for IntelliJ version
         </li>
       </ul>
-    <h2>Version 1.1</h2>
+   <h2>Version 1.3.1</h2>
       <ul>
-        <li>When methods are overloaded, take the one with the most parameters</li>
+        <li>
+          Minor Bugfix
+        </li>
       </ul>
-    <h2>Version 1.0</h2>
-      <ul>
-        <li>First version make from Gist <a href="https://gist.github.com/kontext-e/f68c6a1b90dd862afb5d">ParameterNameGenerator</a></li>
-        <li>Limitation: does not work with overloaded methods</li>
-      </ul>
-    <br/>
+   <h2>Version 1.3</h2>
+     <ul>
+       <li>
+         Fixed plugin for IntelliJ 2023.3+
+         IDE no longer needs restart after installation
+       </li>
+     </ul>
+   <h2>Version 1.2</h2>
+     <ul>
+       <li>
+         When methods are overloaded, display a popup with the available options.
+         This change is made by Roland Spatzenegger https://github.com/CymricNPG
+       </li>
+     </ul>
+   <h2>Version 1.1</h2>
+     <ul>
+       <li>When methods are overloaded, take the one with the most parameters</li>
+     </ul>
+   <h2>Version 1.0</h2>
+     <ul>
+       <li>First version make from Gist <a href="https://gist.github.com/kontext-e/f68c6a1b90dd862afb5d">ParameterNameGenerator</a></li>
+       <li>Limitation: does not work with overloaded methods</li>
+     </ul>
+   <br/>
     ]]>
   </change-notes>
 
