@@ -16,3 +16,6 @@ hs_err_pid*
 
 # Project exclude paths
 /out/
+.idea
+.gradle
+build
