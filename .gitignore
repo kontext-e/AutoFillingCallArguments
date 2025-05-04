@@ -17,5 +17,11 @@ hs_err_pid*
 # Project exclude paths
 /out/
 .idea
+# Gradle
 .gradle
 build
+gradle/
+gradlew
+gradlew.bat
+# Mac
+.DS_Store
