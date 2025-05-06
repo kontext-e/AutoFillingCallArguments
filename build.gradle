@@ -1,6 +1,8 @@
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+
 plugins {
     id("java")
-    id("org.jetbrains.intellij") version "1.17.3"
+    id 'org.jetbrains.intellij.platform' version '2.5.0'
 }
 
 group = "de.kontext-e.jqassistant.plugin"
@@ -8,15 +10,31 @@ version = "1.3.3"
 
 repositories {
     mavenCentral()
+
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
-// Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-intellij {
-    version.set("2025.1")
-    type.set("IC") // Target IDE Platform
+dependencies {
 
-    plugins = ["com.intellij.java"]
+
+    intellijPlatform {
+        intellijIdeaCommunity '2025.1'
+        bundledPlugin 'com.intellij.java'
+    }
+}
+
+intellijPlatform {
+    pluginVerification {
+        ides {
+            ide IntelliJPlatformType.IntellijIdeaCommunity, "2025.1"
+            recommended()
+            select {
+                it.sinceBuild = "233"
+            }
+        }
+    }
 }
 
 java {

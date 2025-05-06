@@ -25,3 +25,5 @@ gradlew
 gradlew.bat
 # Mac
 .DS_Store
+
+.intellijPlatform
