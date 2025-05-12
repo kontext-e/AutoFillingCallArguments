@@ -17,8 +17,6 @@ repositories {
 }
 
 dependencies {
-
-
     intellijPlatform {
         intellijIdeaCommunity '2025.1'
         bundledPlugin 'com.intellij.java'
@@ -26,6 +24,8 @@ dependencies {
 }
 
 intellijPlatform {
+    buildSearchableOptions = false
+
     pluginVerification {
         ides {
             ide IntelliJPlatformType.IntellijIdeaCommunity, "2025.1"
@@ -35,29 +35,19 @@ intellijPlatform {
             }
         }
     }
+
+    signing {
+        certificateChain = System.getenv("CERTIFICATE_CHAIN")
+        privateKey = System.getenv("PRIVATE_KEY")
+        password = System.getenv("PRIVATE_KEY_PASSWORD")
+    }
+
+    publishing {
+        token = System.getenv("PUBLISH_TOKEN")
+    }
 }
 
 java {
     sourceCompatibility = "17"
     targetCompatibility = "17"
-}
-
-tasks {
-    patchPluginXml {
-        sinceBuild.set("233")
-    }
-
-    signPlugin {
-        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-        privateKey.set(System.getenv("PRIVATE_KEY"))
-        password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
-    }
-
-    publishPlugin {
-        token.set(System.getenv("PUBLISH_TOKEN"))
-    }
-
-    buildSearchableOptions {
-        enabled = false
-    }
 }
